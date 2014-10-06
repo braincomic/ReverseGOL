@@ -35,6 +35,10 @@
     <!-- disable settings button -->
     <preference name="android-targetSdkVersion" value="14" />
     
+    <!-- Following warning: This app isn't using the latest version of PhoneGap. We recommend upgrading to 3.5.0. -->
+    <!-- Security Alert: Apache Cordova vulnerabilities in your Google Play app  -->
+    <preference name="phonegap-version" value="3.5.0" />
+    
 </widget>
 
     
