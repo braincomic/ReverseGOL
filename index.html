@@ -1,0 +1,1391 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="apple-touch-icon" href="icon.png">
+<title>Reversed Game of Life</title>
+
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css">
+<script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
+
+<script>
+
+WORLDSIZE = 3 ;
+
+var startmatrix;
+var endmatrix;
+var aCorrectStartMatrix;
+
+
+
+//// MODES - we can work in TWO modes: RANDOM and STORY
+
+var MODE_RANDOM = 0 ;
+
+//// TASKS - QUESTIONS
+
+var CATEGORIES = new Array("Beginner","Competent","Proficient","Expert","Master");
+
+var WORLDSIZES= new Array(3, 3, 4, 5, 6);
+
+var STARTPOSITIONS = new Array();
+
+STARTPOSITIONS[0] = JSON.parse("["+
+"[[1,0,1],[0,0,0],[1,0,0]],"+
+"[[1,1,0],[1,0,0],[0,0,0]],"+
+"[[1,0,1],[0,0,1],[0,0,1]],"+
+"[[1,1,0],[1,0,0],[0,1,0]],"+
+"[[0,1,0],[0,0,1],[0,1,0]],"+
+"[[1,1,0],[0,0,1],[1,0,1]],"+
+"[[1,1,1],[0,0,0],[1,1,1]],"+
+"[[0,1,0],[1,0,1],[0,1,1]],"+
+"[[1,1,0],[0,0,0],[1,0,1]],"+
+"[[1,0,0],[1,0,0],[1,0,1]],"+
+"[[1,0,1],[0,1,1],[1,1,0]],"+
+"[[0,0,1],[1,0,0],[1,1,1]]]");
+
+STARTPOSITIONS[1] = JSON.parse("["+
+"[[0,0,1],[1,1,1],[1,1,0]],"+                         
+"[[1,1,1],[0,1,0],[1,0,1]],"+                         
+"[[1,0,1],[1,1,1],[0,1,0]],"+                         
+"[[0,0,1],[1,1,1],[0,0,1]],"+
+"[[1,1,1],[0,1,0],[0,0,1]],"+
+"[[1,1,0],[0,1,0],[0,1,0]],"+
+"[[1,1,1],[1,0,1],[1,0,0]],"+
+"[[0,1,0],[0,1,1],[1,1,1]],"+
+"[[0,1,0],[1,1,0],[0,1,1]],"+
+"[[1,0,1],[0,1,1],[0,1,0]],"+
+"[[1,0,1],[0,1,0],[0,1,1]],"+
+"[[1,0,0],[1,1,0],[0,0,1]]]");
+
+STARTPOSITIONS[2] = JSON.parse("["+
+"[[1,1,1,0],[0,0,0,1],[0,0,1,0],[0,0,0,0]],"+
+"[[0,0,1,0],[1,0,0,1],[0,1,1,1],[1,1,0,0]],"+
+"[[0,0,0,1],[0,1,0,1],[0,0,0,0],[0,1,1,1]],"+
+"[[0,0,1,0],[1,0,0,1],[0,1,0,1],[0,1,0,1]],"+
+"[[0,0,0,1],[0,1,0,0],[0,0,0,1],[0,1,1,1]],"+
+"[[0,1,0,0],[0,0,1,0],[0,1,1,1],[1,0,1,1]],"+
+"[[0,0,0,1],[0,1,0,0],[0,1,1,1],[0,0,1,1]],"+
+"[[1,1,1,0],[0,1,0,0],[1,0,1,1],[0,1,1,1]],"+
+"[[1,1,1,1],[1,0,0,1],[1,0,1,1],[1,1,0,0]],"+
+"[[0,0,0,1],[1,0,0,1],[0,1,1,1],[1,1,1,1]],"+
+"[[1,0,1,1],[0,1,1,0],[1,1,0,0],[1,1,0,1]],"+
+"[[0,1,1,1],[1,0,1,1],[1,1,0,1],[1,1,1,0]]]");
+
+STARTPOSITIONS[3] = JSON.parse("["+
+"[[0,1,0,0,0],[1,1,0,1,0],[1,1,0,0,0],[1,1,1,1,0],[0,1,1,1,0]],"+
+"[[0,1,1,1,0],[0,1,1,1,0],[1,1,0,1,1],[1,0,0,1,1],[0,0,1,1,0]],"+
+"[[1,1,0,0,0],[0,0,1,0,0],[1,0,0,0,1],[0,1,1,0,0],[1,1,0,1,1]],"+
+"[[0,0,1,0,1],[0,0,1,0,1],[0,1,1,0,0],[1,1,1,1,1],[0,1,0,1,0]],"+
+"[[0,0,1,1,0],[0,1,0,0,0],[1,0,1,1,1],[0,1,0,1,0],[0,1,0,0,0]],"+
+"[[0,1,0,0,0],[0,1,1,1,0],[1,0,0,0,1],[0,1,0,0,0],[1,0,1,0,1]],"+
+"[[0,1,0,0,0],[1,1,1,1,1],[1,1,0,0,1],[1,0,1,1,1],[0,1,1,0,0]],"+
+"[[1,1,1,1,0],[0,1,1,0,1],[0,1,1,0,0],[1,0,0,0,1],[1,1,0,1,1]],"+
+"[[1,1,1,0,1],[0,0,1,0,1],[0,0,1,1,1],[0,1,0,0,0],[1,1,0,0,1]],"+
+"[[1,1,1,1,0],[0,1,1,0,1],[0,1,1,1,1],[1,1,0,0,1],[1,0,1,1,1]],"+
+"[[1,0,1,1,1],[0,0,1,1,1],[0,0,0,0,1],[0,0,1,0,0],[1,1,0,1,0]],"+
+"[[1,0,0,0,1],[1,0,1,0,1],[1,1,1,0,1],[1,1,1,0,1],[1,0,0,1,1]]]");
+
+STARTPOSITIONS[4] = JSON.parse("["+
+"[[1,1,1,0,0,0],[1,1,0,0,1,0],[0,1,1,1,0,1],[0,1,1,0,0,1],[0,0,0,1,0,1],[1,0,0,1,0,1]],"+
+"[[1,0,1,1,0,0],[1,0,1,1,1,1],[1,1,0,1,0,1],[0,0,1,0,1,0],[0,1,1,0,0,0],[0,0,1,0,0,1]],"+
+"[[0,0,1,0,1,1],[0,0,1,0,0,0],[1,1,1,1,0,1],[1,1,0,1,0,1],[1,0,1,0,1,0],[0,1,1,0,1,1]],"+
+"[[1,0,0,0,1,1],[1,0,0,1,1,0],[1,0,1,0,1,1],[0,1,1,1,0,0],[0,0,0,1,0,1],[0,0,0,1,1,1]],"+
+"[[0,0,1,0,0,1],[1,1,1,1,0,1],[1,1,0,0,1,1],[1,0,1,1,0,0],[1,1,1,0,0,0],[1,0,0,0,1,0]],"+
+"[[0,0,1,0,1,1],[0,0,1,1,1,1],[1,0,0,0,0,0],[1,1,0,0,1,0],[0,0,0,0,0,1],[1,1,1,0,0,1]],"+
+"[[0,0,1,1,0,0],[0,0,1,1,0,0],[0,0,1,0,0,1],[1,0,1,0,1,0],[1,1,1,1,0,1],[0,0,1,0,1,1]],"+
+"[[0,0,0,0,0,1],[1,0,1,1,1,0],[1,1,1,0,1,1],[0,0,1,0,0,0],[1,1,0,0,1,1],[0,0,1,1,0,1]],"+
+"[[1,1,1,0,0,1],[0,1,0,0,0,0],[0,1,0,0,0,1],[0,1,1,1,1,1],[0,1,0,0,0,1],[1,1,1,0,0,1]],"+
+"[[0,1,0,0,0,0],[1,0,1,0,0,1],[0,1,0,0,1,1],[0,1,0,1,1,1],[1,0,1,0,1,0],[1,1,0,1,0,1]],"+
+"[[0,0,0,0,0,0],[0,0,0,1,1,1],[1,1,0,0,0,1],[1,1,0,0,0,1],[1,0,0,0,1,1],[1,1,1,0,1,0]],"+
+"[[0,0,0,1,0,0],[1,1,0,1,1,1],[1,0,1,0,0,0],[1,0,1,0,0,0],[0,1,0,1,1,1],[0,1,0,1,1,1]]]");
+
+
+//// QUICK TAPPING
+//
+// see http://phonegap-tips.com/articles/fast-touch-event-handling-eliminate-click-delay.html
+
+$.event.special.tap = {
+  setup: function() {
+    var self = this,
+      $self = $(self);
+
+    $self.on('touchstart', function(startEvent) {
+      var target = startEvent.target;
+
+      $self.one('touchend', function(endEvent) {
+        if (target == endEvent.target) {
+          $.event.simulate('tap', self, endEvent);
+        }
+      });
+    });
+  }
+};
+
+//// START READY FUNCTION
+
+$(document).ready(function(){
+
+
+
+  //////////////////////////////////////////////////////////
+  // HIDE UNIMPORTANT FIELDS
+  
+  
+	// in mode RANDOM
+	if (MODE_RANDOM > 0) {
+		$('#divLevel').hide();
+	}
+	// in mode STORY
+	else {
+		$('label[for="labelSizeWorld"]').hide();
+		$('#containerForSizeWorld').hide();
+		$('#divNewProblem').hide();
+		$('#divShowSolution').hide();
+	}
+	
+  
+  //////////////////////////////////////////////////////////
+  // PRELOAD IMAGES
+  
+  preloadImages([
+    'redsquare.png',
+    'greensquare.png',
+    'redsquaresmiley.png',
+    'greensquaresmiley.png'
+	]);
+	
+  //////////////////////////////////////////////////////////
+  // LOCAL STORAGE
+	
+	// in mode RANDOM
+	if (MODE_RANDOM > 0) {
+		
+		// local storage - world size
+		if (localStorage.getItem("LOCALSTORAGE_WORLDSIZE") === null) {
+	  	localStorage.setItem("LOCALSTORAGE_WORLDSIZE", 3);
+	  }
+	  WORLDSIZE = parseInt(localStorage.getItem("LOCALSTORAGE_WORLDSIZE"));
+	  LEVEL = 0;
+	  localStorage.setItem("LOCALSTORAGE_LEVEL", 0);
+	  debugPrintLine("LOCALSTORAGE_WORLDSIZE = "+WORLDSIZE);
+	  debugPrintLine("LOCALSTORAGE_LEVEL = "+LEVEL);
+	}
+	
+	// in mode STORY
+	else{
+		
+		
+		// local storage - category
+		if (localStorage.getItem("LOCALSTORAGE_LEVEL") === null) {
+	  	localStorage.setItem("LOCALSTORAGE_LEVEL", 0);
+	  }
+	  LEVEL = parseInt(localStorage.getItem("LOCALSTORAGE_LEVEL"));
+	  WORLDSIZE = parseInt(WORLDSIZES[Math.floor(LEVEL/12)]) ;
+	  
+	  debugPrintLine("LOCALSTORAGE_WORLDSIZE = "+WORLDSIZE);
+	  debugPrintLine("LOCALSTORAGE_LEVEL = "+LEVEL);
+	
+	}
+	
+  
+  // SET TEXT ON LEVEL
+  displayLevelNr() ;
+  
+	
+  //////////////////////////////////////////////////////////
+  // CALCULATE INITIAL MATRIX
+  
+	aCorrectStartMatrix = createInitialStartMatrix();
+  debugPrintLine("Correct start matrix:");
+  printMatrix(aCorrectStartMatrix);
+  
+  //////////////////////////////////////////////////////////
+  // PERFORM GOL TO GET END MATRIX
+  endmatrix = performGOL(aCorrectStartMatrix);
+  debugPrintLine("End matrix:");
+  printMatrix(endmatrix);
+  
+  //////////////////////////////////////////////////////////
+  // DISPLAY INITIAL MATRIX
+
+	displayWorld(endmatrix);
+	
+	// count the nr of active cells in the endmatrix and print it
+	// nrActiveCellsEnd = 0;
+	// nrActiveCellsStart = 0;
+  // for (var i = 0; i < WORLDSIZE; i++) {
+  // 	for (var j = 0; j < WORLDSIZE; j++) {
+  // 		nrActiveCellsEnd+=endmatrix[i][j];
+  // 		nrActiveCellsStart+=aCorrectStartMatrix[i][j];
+  // 	}
+  // }
+  // debugPrintLine(nrActiveCellsStart+"---"+nrActiveCellsEnd+"---"+JSON.stringify(aCorrectStartMatrix));
+	
+  
+  //////////////////////////////////////////////////////////
+  // EVENT TOGGLE CELL WHEN CLICKED
+	
+	$('.cell').on('tap', function() {
+	  var $self = $(this);
+	  toggleAlife(this);
+	});
+	
+  //////////////////////////////////////////////////////////
+  // EVENT START NEW PROBLEM
+  
+  $("#buttonNewProblem").click(function(){
+  	startNewProblem();
+  });
+  
+  
+  //////////////////////////////////////////////////////////
+  // EVENT GO TO NEXT AND PREVIOUS LEVEL
+  
+  $("#buttonLevelNext").click(function(){
+		debugPrintLine("buttonLevelNext has been clicked");
+		// only mode STORY
+		if (MODE_RANDOM <= 0) {
+			// current level (including 0)
+			increaseLevelWordSize();
+			startNewProblem();
+			displayLevelNr();
+		}
+  });
+  
+  $("#buttonLevelBack").click(function(){
+		// only mode STORY
+		if (MODE_RANDOM <= 0) {
+			// current level (including 0)
+			LEVEL = LEVEL-1; 
+			// but no less than 0
+			if (LEVEL < 0) LEVEL = 0;
+			localStorage.setItem("LOCALSTORAGE_LEVEL", LEVEL);
+			WORLDSIZE = parseInt(WORLDSIZES[Math.floor(LEVEL/12)]) ;
+			startNewProblem();
+			displayLevelNr();
+		}
+  });
+  
+  //////////////////////////////////////////////////////////
+  // EVENT GO SWIPE TO NEXT AND PREVIOUS LEVEL
+  
+  
+  $("#container").on("swipeleft",function(){
+  	$("#buttonLevelNext").click();
+	});
+  
+  $("#container").on("swiperight",function(){
+  	$("#buttonLevelBack").click();
+	});
+
+  
+  
+  //////////////////////////////////////////////////////////
+  // EVENT SHOW SOLUTION
+  
+  $("#buttonShowSolution").click(function(){
+  	debugPrintLine("Click button Show Solution");
+  	startmatrix = readStartMatrix() ;
+  	printMatrix(startmatrix);
+  	animateAnotherWorldStart(aCorrectStartMatrix, startmatrix);
+  });
+  $("#buttonigiveup").click(function(){
+  	startmatrix = readStartMatrix() ;
+  	animateAnotherWorldStart(aCorrectStartMatrix, startmatrix);
+  });
+  
+  
+  
+  //////////////////////////////////////////////////////////
+  // EVENT SELECT NEW WORLD SIZE
+  
+  $("#idSelectSizeWorld").change(function(){
+		// in mode RANDOM
+		if (MODE_RANDOM > 0) {
+	  	WORLDSIZE = $("#idSelectSizeWorld option:selected").val();
+	  	localStorage.setItem("LOCALSTORAGE_WORLDSIZE", WORLDSIZE);
+	  	startNewProblem();
+  	}
+  });
+  
+  
+  //////////////////////////////////////////////////////////
+  // NEW LEVEL SELECTED
+  
+  $("#levelSelection").change(function(){
+		// only mode STORY
+		if (MODE_RANDOM <= 0) {
+			// current level (including 0)
+			LEVEL = $("#levelSelection option:selected").val() - 1;
+			// but no less than 0
+			if (LEVEL < 0) LEVEL = 0;
+			if (LEVEL >= 5*12) LEVEL = 5*12-1 ;
+			localStorage.setItem("LOCALSTORAGE_LEVEL", LEVEL);
+			WORLDSIZE = parseInt(WORLDSIZES[Math.floor(LEVEL/12)]) ;
+			startNewProblem();
+			displayLevelNr();
+			$('[data-role=dialog]').dialog( "close" );
+		}
+  });
+  
+  
+  //////////////////////////////////////////////////////////
+  
+  $("#checkbutton").click(function(){
+  	
+  	// DECLARE MATRIX POSITIONS
+  	
+  	startmatrix = readStartMatrix() ;
+  	//var endmatrix   = readEndMatrix() ;
+    
+    // PRINT MATRICES
+  	
+  	debugPrintLine("Ending matrix:");
+  	printMatrix(endmatrix); 
+  	
+  	debugPrintLine("Starting matrix:");
+  	printMatrix(startmatrix); 
+    
+    // PERFORM GAME OF LIFE ON START STATE
+    
+    calculatedEnd = performGOL(startmatrix);
+		
+		// CHECK IF THE SOLUTION IS OK
+		
+		// so we should compare calculatedEnd with endMatrix
+		var nrNOK = 0;
+		debugPrintLine("Check if solution is OK");
+  	for (var i = 0; i < WORLDSIZE; i++) {
+  		for (var j = 0; j < WORLDSIZE; j++) {
+  			if ( calculatedEnd[i][j] != endmatrix[i][j] ) {
+  				nrNOK ++;
+  				debugPrintLine("Solution NOK "+nrNOK);
+  			}
+  		}
+  	}
+  	if (nrNOK == 0) {
+  		//alert("Congratz, solution is OK");
+  		$("#lnkDialog").click();
+  		$("#buttonLevelNext").click();
+  	}
+  	debugPrintLine("Finished checking if OK");
+		
+		
+		// SHOW AND AMINATE THE calculated end
+		
+		animateAnotherWorldEnd(calculatedEnd, endmatrix);
+		
+		
+		// DISPLAY "WRONG" ON CHECKBUTTON
+		if (nrNOK > 0) {
+			$('#spancheck').text('WRONG');
+			setTimeout(function(){
+				$('#spancheck').text('Check');
+			},getTimeShowIncorrectSolution(WORLDSIZE)); // end timeout
+		}
+		
+  });
+  
+});
+//// END READY FUNCTION
+
+
+//////////////////////////////////////////////////////
+// Time to show incorrect solution
+function getTimeShowIncorrectSolution(sizeWorld) {
+	if (sizeWorld < 1  ) return 1000 ;
+	else return (1000 + 250 * (sizeWorld-3) )  ;
+}
+
+
+
+//////////////////////////////////////////////////////
+// SWITH TO matrix1 DURING 1 SECOND, AND THEN GO BACK TO matrix2 --> toggling end states (green, red)
+
+function animateAnotherWorldEnd(matrix1, matrix2) {
+		
+    debugPrintLine("A");
+  	// 1. First change to the (incorrect) end state, corresponding to the (incorrect) start state
+  	var currentRow = 0;
+  	var currentCol = 0;
+    $("div.cell").children('img').each(function() {
+    	debugPrintLine("B");
+    	if ( matrix1[currentRow][currentCol] != matrix2[currentRow][currentCol] ) {
+    		toggleAlifeEnd($( this ).parent());
+    	}
+    	// update i and j
+    	currentCol ++;
+    	if (currentCol >= WORLDSIZE) {
+    		currentCol = 0;
+    		currentRow ++;
+    	}
+    });
+    
+    debugPrintLine("a");
+    
+    printMatrix(matrix2);
+
+		// 2. and after some timeout
+		setTimeout(function(){
+		
+		// 3. Change back to the (incorrect) start state
+    debugPrintLine("b");
+  	var currentRow = 0;
+  	var currentCol = 0;
+    $("div.cell").children('img').each(function() {
+    	debugPrintLine("c");
+    	if ( matrix1[currentRow][currentCol] != matrix2[currentRow][currentCol] ) {
+    		toggleAlifeEnd($( this ).parent());
+    	}
+    	debugPrintLine("d");
+    	// update i and j
+    	currentCol ++;
+    	if (currentCol >= WORLDSIZE) {
+    		currentCol = 0;
+    		currentRow ++;
+    	}
+    	debugPrintLine("e");
+    });
+		
+		},getTimeShowIncorrectSolution(WORLDSIZE)); // end timeout
+		
+    debugPrintLine("f");
+ }
+
+
+//////////////////////////////////////////////////////
+// SWITH TO matrix1 DURING 1 SECOND, AND THEN GO BACK TO matrix2 -> toggling start states (smileys)
+
+function animateAnotherWorldStart(matrix1, matrix2) {
+		
+    debugPrintLine("A");
+  	// 1. First change to the (incorrect) end state, corresponding to the (incorrect) start state
+  	var currentRow = 0;
+  	var currentCol = 0;
+    $("div.cell").children('img').each(function() {
+    	debugPrintLine("B");
+    	if ( matrix1[currentRow][currentCol] != matrix2[currentRow][currentCol] ) {
+    		toggleAlife($( this ).parent());
+    	}
+    	// update i and j
+    	currentCol ++;
+    	if (currentCol >= WORLDSIZE) {
+    		currentCol = 0;
+    		currentRow ++;
+    	}
+    });
+    
+    debugPrintLine("a");
+    
+    printMatrix(matrix2);
+
+		// 2. and after some timeout
+		setTimeout(function(){
+		
+		// 3. Change back to the (incorrect) start state
+    debugPrintLine("b");
+  	var currentRow = 0;
+  	var currentCol = 0;
+    $("div.cell").children('img').each(function() {
+    	debugPrintLine("c");
+    	if ( matrix1[currentRow][currentCol] != matrix2[currentRow][currentCol] ) {
+    		toggleAlife($( this ).parent());
+    	}
+    	debugPrintLine("d");
+    	// update i and j
+    	currentCol ++;
+    	if (currentCol >= WORLDSIZE) {
+    		currentCol = 0;
+    		currentRow ++;
+    	}
+    	debugPrintLine("e");
+    });
+		
+		},getTimeShowIncorrectSolution(WORLDSIZE)); // end timeout
+		
+    debugPrintLine("f");
+ }
+
+
+
+//////////////////////////////////////////////////////
+function toggleAlife(thediv) {
+		var mysrc  = $( thediv ).children('img').attr('src');
+		var newsrc ;
+		if (mysrc == "greensquare.png") newsrc = "greensquaresmiley.png";
+		else if (mysrc == "greensquaresmiley.png") newsrc = "greensquare.png";
+		else if (mysrc == "redsquare.png") newsrc = "redsquaresmiley.png";
+		else newsrc = "redsquare.png";
+	   $( thediv ).children('img').attr('src', newsrc);
+}
+
+//////////////////////////////////////////////////////
+function toggleAlifeEnd(thediv) {
+		var mysrc  = $( thediv ).children('img').attr('src');
+		var newsrc ;
+		if (mysrc == "greensquare.png") newsrc = "redsquare.png";
+		else if (mysrc == "redsquare.png") newsrc = "greensquare.png";
+		else if (mysrc == "greensquaresmiley.png") newsrc = "redsquaresmiley.png";
+		else newsrc = "greensquaresmiley.png";
+	   $( thediv ).children('img').attr('src', newsrc);
+}
+
+//////////////////////////////////////////////////////
+function increaseLevelWordSize() {
+	LEVEL = LEVEL+1 ;
+	if (LEVEL >= 5*12) LEVEL = 5*12-1 ;
+	localStorage.setItem("LOCALSTORAGE_LEVEL", LEVEL);
+	WORLDSIZE = parseInt(WORLDSIZES[Math.floor(LEVEL/12)]) ;
+}
+
+//////////////////////////////////////////////////////
+// START A NEW PROBLEM (called when changing size, when new problem, at beginning, when solution found)
+function startNewProblem() {
+  	aCorrectStartMatrix = createInitialStartMatrix();
+  	endmatrix = performGOL(aCorrectStartMatrix);
+  	displayWorld(endmatrix);
+  	
+  	// count the nr of active cells in the endmatrix
+		// nrActiveCellsEnd = 0;
+		// nrActiveCellsStart = 0;
+  	// for (var i = 0; i < WORLDSIZE; i++) {
+  	// 	for (var j = 0; j < WORLDSIZE; j++) {
+  	// 		nrActiveCellsEnd+=endmatrix[i][j];
+  	// 		nrActiveCellsStart+=aCorrectStartMatrix[i][j];
+  	// 	}
+  	// }
+  	// debugPrintLine(nrActiveCellsStart+"---"+nrActiveCellsEnd+"---"+JSON.stringify(aCorrectStartMatrix));
+  	
+		$('.cell').on('tap', function() {
+		  var $self = $(this);
+		  toggleAlife(this);
+		});
+}
+
+//////////////////////////////////////////////////////
+
+function readStartMatrix() {
+  	// DECLARE MATRIX POSITIONS
+  	
+  	var startmatrix = new Array(WORLDSIZE); 
+  	for (var i = 0; i < WORLDSIZE; i++) {
+    	startmatrix[i] = new Array(WORLDSIZE);
+    }
+  	
+  	// FILL MATRIXES
+  	
+  	// A, some default
+  	for (var i = 0; i < WORLDSIZE; i++) {
+  		for (var j = 0; j < WORLDSIZE; j++) {
+  			startmatrix[i][j] = 0;
+  		}
+  	}
+  	// B, real value according to class
+  	var currentRow = 0;
+  	var currentCol = 0;
+  	debugPrintLine("before div.cell children each") ;
+    $("div.cell").children('img').each(function() {
+    	currentimage = $( this) .attr('src');
+    	if ( currentimage == "redsquaresmiley.png" || currentimage == "greensquaresmiley.png" ) {
+    		startmatrix[currentRow][currentCol] = 1;
+    	}
+    	// update i and j
+    	currentCol ++;
+    	if (currentCol >= WORLDSIZE) {
+    		currentCol = 0;
+    		currentRow ++;
+    	}
+    });
+    debugPrintLine("Printing matrix");
+    printMatrix(startmatrix);
+    return startmatrix;
+}
+
+//////////////////////////////////////////////////////
+
+function readEndMatrixOld() { // old
+// this function is obsolete.
+// It determines the end matrix based on the classes
+// on the html page. But we have already calculated
+// this before we built this page!
+
+  	// DECLARE MATRIX POSITIONS
+  	
+  	var endmatrix   = new Array(WORLDSIZE); 
+  	for (var i = 0; i < WORLDSIZE; i++) {
+    	endmatrix  [i] = new Array(WORLDSIZE);
+    }
+  	
+  	// FILL MATRIXES
+  	
+  	// A, some default
+  	for (var i = 0; i < WORLDSIZE; i++) {
+  		for (var j = 0; j < WORLDSIZE; j++) {
+  			endmatrix  [i][j] = 0;
+  		}
+  	}
+  	// B, real value according to class
+  	var currentRow = 0;
+  	var currentCol = 0;
+    $("td.cell").each(function() {
+    	if ( $( this ).hasClass( "end1" ) ) {
+    		endmatrix[currentRow][currentCol] = 1;
+    	}
+    	// update i and j
+    	currentCol ++;
+    	if (currentCol >= WORLDSIZE) {
+    		currentCol = 0;
+    		currentRow ++;
+    	}
+    });
+    return endmatrix;
+}
+
+//////////////////////////////////////////////////////
+
+function printMatrix(matrix) {
+  	for (var i = 0; i < matrix.length; i++) {
+  		for (var j = 0; j < matrix[0].length; j++) {
+  			debugPrint(matrix[i][j]);
+  		}
+  		debugPrint("<br>");
+  	}
+  	debugPrint("<br>");
+  }
+
+
+//////////////////////////////////////////////////////
+// Display the GOL world as a table on the HTML page
+
+function displayWorldOld(endmatrix) {
+	$('#containerForWorld').empty();
+	var table = $('<table></table>').addClass('squareWorld');
+     for (var i = 0; i < WORLDSIZE; i++) {
+             row = $('<tr></tr>');
+             for (var j = 0; j < WORLDSIZE; j++) {
+                 var row1 = $('<td></td>').addClass('cell');
+                 if (endmatrix[i][j] > 0) {
+                 	row1.addClass('end1');
+                 }
+                 table.append(row);
+                 row.append(row1);
+             }
+         }
+         $('#containerForWorld').append(table);
+}
+
+function displayWorld(endmatrix) {
+	// get current width
+	curr_width = $("#container").width();
+	// change size of cell
+	var newWidth = Math.floor( curr_width / WORLDSIZE );
+	//$('.cell').css({"width":"50px"});
+	// empty before filling
+	$('#containerForWorld').empty();
+	var firstColumnClass = "";
+	var greenRed = "";
+	for (var i = 0; i < WORLDSIZE; i++) {
+		for (var j = 0; j < WORLDSIZE; j++) {
+			if (j == 0) firstColumnClass = "firstcolumn" ;
+			else firstColumnClass = "othercolumn";
+			if (endmatrix[i][j] <= 0) greenRed = "red" ;
+			else greenRed = "green";
+			$('#containerForWorld').append('<div class="'+firstColumnClass+' cell"><img src="'+greenRed+'square.png" width="'+newWidth+'" height="'+newWidth+'"/></div>');
+		}
+	}
+	$('#levelSelection').val((LEVEL+1));
+}
+
+
+
+//////////////////////////////////////////////////////
+
+function displayLevelNr() {
+	mytext = "Level "+(LEVEL+1)+" - "+CATEGORIES[Math.floor(LEVEL/12)]; // +1 because first level is level 1, not level 0
+	$("#spanLevelNr").html(mytext);
+}
+
+//////////////////////////////////////////////////////
+
+function performGOL (startmat) {
+	worldheight = startmat.length;
+	worldwidth = startmat[0].length;
+	debugPrint("worldsize="+worldwidth+"x"+worldheight+"<br>");
+	
+	// create matrix with number of neighbors + endstate
+  var nei = new Array(worldheight); 
+  var calcend = new Array(worldheight); 
+  for (var i = 0; i < worldheight; i++) {
+  	nei[i]     = new Array(worldwidth);
+  	calcend[i] = new Array(worldwidth);
+  }
+  
+  // calculate number of neighbors
+  for (var i = 0; i < worldheight; i++) {
+  	for (var j = 0; j < worldwidth; j++) {
+  		nei[i][j] = 0 ;
+  		indi = i-1; indj = j-1; if (indi>=0 && indi<worldheight && indj>=0 && indj<worldwidth && startmat[indi][indj]>0) { nei[i][j]++; }
+  		indi = i-1; indj = j  ; if (indi>=0 && indi<worldheight && indj>=0 && indj<worldwidth && startmat[indi][indj]>0) { nei[i][j]++; }
+  		indi = i-1; indj = j+1; if (indi>=0 && indi<worldheight && indj>=0 && indj<worldwidth && startmat[indi][indj]>0) { nei[i][j]++; }
+  		indi = i  ; indj = j-1; if (indi>=0 && indi<worldheight && indj>=0 && indj<worldwidth && startmat[indi][indj]>0) { nei[i][j]++; }
+  	//indi = i  ; indj = j  ; if (indi>=0 && indi<worldheight && indj>=0 && indj<worldwidth && startmat[indi][indj]>0) { nei[i][j]++; }
+  		indi = i  ; indj = j+1; if (indi>=0 && indi<worldheight && indj>=0 && indj<worldwidth && startmat[indi][indj]>0) { nei[i][j]++; }
+  		indi = i+1; indj = j-1; if (indi>=0 && indi<worldheight && indj>=0 && indj<worldwidth && startmat[indi][indj]>0) { nei[i][j]++; }
+  		indi = i+1; indj = j  ; if (indi>=0 && indi<worldheight && indj>=0 && indj<worldwidth && startmat[indi][indj]>0) { nei[i][j]++; }
+  		indi = i+1; indj = j+1; if (indi>=0 && indi<worldheight && indj>=0 && indj<worldwidth && startmat[indi][indj]>0) { nei[i][j]++; }
+  	}
+  }
+  
+  // print number of neighbors
+  debugPrintLine("Matrix nr neighbors:");
+  for (var i = 0; i < worldheight; i++) {
+  	for (var j = 0; j < worldwidth; j++) {
+  		debugPrint(nei[i][j]);
+  	}
+  	debugPrintLine("");
+  }
+  debugPrintLine("");
+  
+  // calculate the correct end state, corresponding 
+  // to the given start state (and already calculated neighbors)
+  for (var i = 0; i < worldheight; i++) {
+  	for (var j = 0; j < worldwidth; j++) {
+  		if (nei[i][j]<2)  calcend[i][j]=0;
+  		if (nei[i][j]==2) calcend[i][j]=startmat[i][j];
+  		if (nei[i][j]==3) calcend[i][j]=1;
+  		if (nei[i][j]>3)  calcend[i][j]=0;
+  	}
+  }
+  
+  // print calculated end state
+  debugPrintLine("Matrix corresponding end state:");
+  for (var i = 0; i < worldheight; i++) {
+  	for (var j = 0; j < worldwidth; j++) {
+  		debugPrint(calcend[i][j]);
+  	}
+  	debugPrintLine("");
+  }
+  debugPrintLine("");
+	
+	
+	// return calculated end state
+	return calcend;
+	
+}
+
+//////////////////////////////////////////////////////
+
+function createInitialStartMatrix () {
+  	
+  // in mode RANDOM
+	if (MODE_RANDOM > 0) {
+	
+  	// declare
+  	
+  	var startmatrix = new Array(WORLDSIZE); 
+  	for (var i = 0; i < WORLDSIZE; i++) {
+    	startmatrix[i] = new Array(WORLDSIZE);
+    }
+  	
+  	// fill and keep track of nrs
+  	
+  	var nr0 = 0;
+  	var nr1 = 0;
+  	
+  	for (var i = 0; i < WORLDSIZE; i++) {
+  		for (var j = 0; j < WORLDSIZE; j++) {
+  			if (Math.random() > 0.5) {
+  				startmatrix[i][j] = 1;
+  				nr1 ++;
+  			}
+  			else {
+  				startmatrix[i][j] = 0;
+  				nr0 ++ ;
+  			}
+  		}
+  	}
+  	
+  	// if too many zeros or ones, restart
+  	
+  	if (nr0 < 3 || nr1 > 0.75*WORLDSIZE*WORLDSIZE ) {
+  		startmatrix = createInitialStartMatrix ();
+  	}
+  	
+  	// return
+  	
+  	return startmatrix;
+  }
+  
+  // in mode STORY
+  else {
+  	return STARTPOSITIONS[Math.floor(LEVEL/12)][LEVEL%12] ;
+  }
+}
+	
+
+///////////////////////////////////////////////////////
+
+// preload list of images
+
+function preloadImages(arrayOfImages) {
+    $(arrayOfImages).each(function(){
+        $('<img/>')[0].src = this;
+        // Alternatively you could use:
+        // (new Image()).src = this;
+    });
+}
+
+
+///////////////////////////////////////////////////////
+
+function debugPrint(str) {
+	// $("#debugtext").append(str);
+}
+function debugPrint2(str) {
+	$("#debugtext").append(str);
+}
+
+function debugPrintLine(str) {
+	debugPrint(str+"<br>");
+}
+
+function debugPrintLine2(str) {
+	$("#debugtext").append(str+"<br/>");
+}
+
+</script>
+
+<style type="text/css">
+
+
+.firstcolumn {
+    float: left;
+    clear: both; 
+}
+
+.othercolumn {
+    float: left;
+}
+
+.cell {
+    //width: 100px;
+}
+
+
+#container {
+    width: 300px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+#footer {
+    clear: both;
+}
+
+
+span#spancheck {
+	font-weight:bold;
+	font-size:300%;
+	//color: red;
+}
+
+.ui-header .ui-title {
+    margin-left: 1em; 
+    margin-right: 1em;
+    text-overflow: clip;
+  overflow: visible !important;
+  white-space: normal !important;
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+
+
+
+<div data-role="page" id="pageone" data-theme="a">
+
+
+        
+  <div data-role="header" data-position="fixed">
+    <h1>Reversed Game of Life</h1>
+  </div>
+
+  <div data-role="content">
+    
+
+<div id="container">
+        <div id="header">
+
+
+
+	<!-- display LEVEL -->
+	<!--  used to be a control group
+	<div  style="text-align: center;" id="divLevel">
+		<div data-role="controlgroup" data-type="horizontal">
+		  <a href="#anylink" data-role="button" id="buttonLevelBack" data-icon="arrow-l" data-iconpos="notext">Go back</a>
+		  <a href="#overviewLevelsPageOld" data-role="button" id="buttonLevelNr" data-rel="dialog"><span id="spanLevelNr">Level 1 - Beginner</span></a>
+		  <a href="#anylink" data-role="button" id="buttonLevelNext" data-icon="arrow-r" data-iconpos="notext">Next</a>
+		</div>
+	</div>
+	-->
+	<a href="#overviewLevelsPage" data-role="button" id="buttonLevelNr" data-rel="dialog" data-corners="false"><span id="spanLevelNr">Level 1 - Beginner</span></a>
+
+		
+	<!-- display I GIVE UP and HELP -->	
+		<div class="ui-grid-a">
+    	<div class="ui-block-a"><a data-role="button" id="buttonigiveup" data-icon="delete" data-corners="false">I give up</a></div>
+    	<div class="ui-block-b"><a href="#help0" data-role="button" id="buttonhelp" data-icon="info" data-rel="dialog" data-corners="false">Help</a></div>
+		</div>
+
+    </div><!-- end div header -->	
+    
+		<div id="containerForWorld">
+
+
+    
+    
+
+    </div>
+  	
+
+    <div id="footer">
+    		<button type="button" id="checkbutton" data-icon="check" data-corners="false" data-theme="b"><span id="spancheck">Check</span></button>
+        <small><p><span id="debugtext"></span></p></small>
+    	
+				<!-- invisible, container to open dialog congratulations -->
+				<small>
+				<a id='lnkDialog' href="#congratzPage" data-rel="dialog"></a> 
+		 	 	<a href="#anylink" id="buttonLevelBack"></a>
+		 	 	<a href="#anylink" id="buttonLevelNext"></a>
+		 	 	</small>
+    </div>
+</div> <!-- end container -->
+
+  </div>  <!-- end data-role="content" -->
+
+<!-- no footer
+  <div data-role="footer" data-position="fixed">
+    <h1>Footer Text</h1>
+  </div>
+-->
+
+</div> <!-- end data-role="page" id="pageone" -->
+
+
+<div data-role="page" id="congratzPage" >
+  <div data-role="header">
+    <h1>Congratulations!</h1>
+  </div>
+  <div data-role="content">
+    <p  style="text-align: center;">
+    	Your answer is correct!
+    </p> 
+    <a href="#pageone" type="button">Next problem</a>
+  </div>
+</div> 
+
+
+
+
+<div data-role="page" id="overviewLevelsPage" >
+  <div data-role="header">
+    <h1>Level selection</h1>
+  </div>
+  <div data-role="content">
+  <!--
+		<a href="#anylink" data-role="button" id="buttonLevelBack" data-icon="arrow-l">To previous level</a>
+		<a href="#anylink" data-role="button" id="buttonLevelNext" data-icon="arrow-r">To next level</a>
+  -->
+<select name="day" id="levelSelection">
+	<optgroup label="Beginner - 3 X 3">
+		<option value="1" >Select Level 1</option>
+		<option value="2" >Select Level 2</option>
+		<option value="3" >Select Level 3</option>
+		<option value="4" >Select Level 4</option>
+		<option value="5" >Select Level 5</option>
+		<option value="6" >Select Level 6</option>
+		<option value="7" >Select Level 7</option>
+		<option value="8" >Select Level 8</option>
+		<option value="9" >Select Level 9</option>
+		<option value="10">Select Level 10</option>
+		<option value="11">Select Level 11</option>
+		<option value="12">Select Level 12</option>
+	</optgroup>
+	<optgroup label="Competent - 3 X 3">
+		<option value="13">Select Level 13</option>
+		<option value="14">Select Level 14</option>
+		<option value="15">Select Level 15</option>
+		<option value="16">Select Level 16</option>
+		<option value="17">Select Level 17</option>
+		<option value="18">Select Level 18</option>
+		<option value="19">Select Level 19</option>
+		<option value="20">Select Level 20</option>
+		<option value="21">Select Level 21</option>
+		<option value="22">Select Level 22</option>
+		<option value="23">Select Level 23</option>
+		<option value="24">Select Level 24</option>
+	</optgroup>
+	<optgroup label="Proficient - 4 X 4">
+		<option value="25">Select Level 25</option>
+		<option value="26">Select Level 26</option>
+		<option value="27">Select Level 27</option>
+		<option value="28">Select Level 28</option>
+		<option value="29">Select Level 29</option>
+		<option value="30">Select Level 30</option>
+		<option value="31">Select Level 31</option>
+		<option value="32">Select Level 32</option>
+		<option value="33">Select Level 33</option>
+		<option value="34">Select Level 34</option>
+		<option value="35">Select Level 35</option>
+		<option value="36">Select Level 36</option>
+	</optgroup>
+	<optgroup label="Expert - 5 X 5">
+		<option value="37">Select Level 37</option>
+		<option value="38">Select Level 38</option>
+		<option value="39">Select Level 39</option>
+		<option value="40">Select Level 40</option>
+		<option value="41">Select Level 41</option>
+		<option value="42">Select Level 42</option>
+		<option value="43">Select Level 43</option>
+		<option value="44">Select Level 44</option>
+		<option value="45">Select Level 45</option>
+		<option value="46">Select Level 46</option>
+		<option value="47">Select Level 47</option>
+		<option value="48">Select Level 48</option>
+	</optgroup>
+	<optgroup label="Master - 6 X 6">
+		<option value="49">Select Level 49</option>
+		<option value="50">Select Level 50</option>
+		<option value="51">Select Level 51</option>
+		<option value="52">Select Level 52</option>
+		<option value="53">Select Level 53</option>
+		<option value="54">Select Level 54</option>
+		<option value="55">Select Level 55</option>
+		<option value="56">Select Level 56</option>
+		<option value="57">Select Level 57</option>
+		<option value="58">Select Level 58</option>
+		<option value="59">Select Level 59</option>
+		<option value="60">Select Level 60</option>
+	</optgroup>
+</select>
+  </div>
+</div> 
+
+
+
+
+<div data-role="page" id="overviewLevelsPageOld" >
+  <div data-role="header">
+    <h1>Overview of Levels</h1>
+  </div>
+  <div data-role="content">
+  <ul data-role="listview">
+<li>Level 1 - Beginner - 3 x 3</li>
+<li>Level 2 - Beginner - 3 x 3</li>
+<li>Level 3 - Beginner - 3 x 3</li>
+<li>Level 4 - Beginner - 3 x 3</li>
+<li>Level 5 - Beginner - 3 x 3</li>
+<li>Level 6 - Beginner - 3 x 3</li>
+<li>Level 7 - Beginner - 3 x 3</li>
+<li>Level 8 - Beginner - 3 x 3</li>
+<li>Level 9 - Beginner - 3 x 3</li>
+<li>Level 10 - Beginner - 3 x 3</li>
+<li>Level 11 - Beginner - 3 x 3</li>
+<li>Level 12 - Beginner - 3 x 3</li>
+<li>Level 13 - Competent - 3 x 3</li>
+<li>Level 14 - Competent - 3 x 3</li>
+<li>Level 15 - Competent - 3 x 3</li>
+<li>Level 16 - Competent - 3 x 3</li>
+<li>Level 17 - Competent - 3 x 3</li>
+<li>Level 18 - Competent - 3 x 3</li>
+<li>Level 19 - Competent - 3 x 3</li>
+<li>Level 20 - Competent - 3 x 3</li>
+<li>Level 21 - Competent - 3 x 3</li>
+<li>Level 22 - Competent - 3 x 3</li>
+<li>Level 23 - Competent - 3 x 3</li>
+<li>Level 24 - Competent - 3 x 3</li>
+<li>Level 25 - Proficient - 4 x 4</li>
+<li>Level 26 - Proficient - 4 x 4</li>
+<li>Level 27 - Proficient - 4 x 4</li>
+<li>Level 28 - Proficient - 4 x 4</li>
+<li>Level 29 - Proficient - 4 x 4</li>
+<li>Level 30 - Proficient - 4 x 4</li>
+<li>Level 31 - Proficient - 4 x 4</li>
+<li>Level 32 - Proficient - 4 x 4</li>
+<li>Level 33 - Proficient - 4 x 4</li>
+<li>Level 34 - Proficient - 4 x 4</li>
+<li>Level 35 - Proficient - 4 x 4</li>
+<li>Level 36 - Proficient - 4 x 4</li>
+<li>Level 37 - Expert - 5 x 5</li>
+<li>Level 38 - Expert - 5 x 5</li>
+<li>Level 39 - Expert - 5 x 5</li>
+<li>Level 40 - Expert - 5 x 5</li>
+<li>Level 41 - Expert - 5 x 5</li>
+<li>Level 42 - Expert - 5 x 5</li>
+<li>Level 43 - Expert - 5 x 5</li>
+<li>Level 44 - Expert - 5 x 5</li>
+<li>Level 45 - Expert - 5 x 5</li>
+<li>Level 46 - Expert - 5 x 5</li>
+<li>Level 47 - Expert - 5 x 5</li>
+<li>Level 48 - Expert - 5 x 5</li>
+<li>Level 49 - Master - 6 x 6</li>
+<li>Level 50 - Master - 6 x 6</li>
+<li>Level 51 - Master - 6 x 6</li>
+<li>Level 52 - Master - 6 x 6</li>
+<li>Level 53 - Master - 6 x 6</li>
+<li>Level 54 - Master - 6 x 6</li>
+<li>Level 55 - Master - 6 x 6</li>
+<li>Level 56 - Master - 6 x 6</li>
+<li>Level 57 - Master - 6 x 6</li>
+<li>Level 58 - Master - 6 x 6</li>
+<li>Level 59 - Master - 6 x 6</li>
+<li>Level 60 - Master - 6 x 6</li>
+</ul>
+  </div>
+</div> 
+
+
+
+
+<div data-role="page" id="help0" >
+  <div data-role="header">
+    <h1>Rules of Game of Life</h1>
+  </div>
+  <div data-role="content">
+		<p>
+			Living cells are represented by smileys.
+		</p>
+
+<div class="firstcolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+
+<div style="clear: both;">
+		<a href="#help1" data-rel="dialog">Next</a>
+</div>
+  </div>
+</div> 
+
+
+
+
+<div data-role="page" id="help1" >
+  <div data-role="header">
+    <h1>Rule 1</h1>
+  </div>
+  <div data-role="content">
+		<p>
+			Each cell with 2 or 3 neighbors survives, diagonal always counts.
+		</p>
+
+<div class="firstcolumn"><img src="greensquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="greensquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="greensquaresmiley.png" width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+
+<div style="clear: both;">
+		<a href="#help2" data-rel="dialog">Next</a>
+</div>
+  </div>
+</div> 
+
+
+
+
+<div data-role="page" id="help2" >
+  <div data-role="header">
+    <h1>Rule 2</h1>
+  </div>
+  <div data-role="content">
+		<p>
+			Each cell with 0 or 1 neighbor(s) dies by loneliness.
+		</p>
+<div class="firstcolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquaresmiley.png"   width="75" height="75"/></div>
+
+<div style="clear: both;">
+		<a href="#help3" data-rel="dialog">Next</a>
+</div>
+  </div>
+</div> 
+
+
+
+<div data-role="page" id="help3" >
+  <div data-role="header">
+    <h1>Rule 3</h1>
+  </div>
+  <div data-role="content">
+		<p>
+			Each cell with 4 or more neighbors dies by overpopulation.
+		</p>
+<div class="firstcolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquaresmiley.png"   width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+
+<div style="clear: both;">
+		<a href="#help4" data-rel="dialog">Next</a>
+</div>
+  </div>
+</div> 
+
+
+
+<div data-role="page" id="help4" >
+  <div data-role="header">
+    <h1>Rule 4</h1>
+  </div>
+  <div data-role="content">
+		<p>
+			Each dead cell with exactly 3 living neighbours becomes alive by reproduction.
+		</p>
+		
+<div class="firstcolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="greensquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="whitesquaresmiley.png" width="75" height="75"/></div>
+
+<div style="clear: both;">
+		<a href="#help5" data-rel="dialog">Next</a>
+</div>
+  </div>
+</div> 
+
+
+
+<div data-role="page" id="help5" >
+  <div data-role="header">
+    <h1>Combine</h1>
+  </div>
+  <div data-role="content">
+		<p>
+			The Game of Life combines these 4 rules. Smileys &rarr; green/red.
+		</p>
+
+<div class="firstcolumn"><img src="greensquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="greensquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="greensquaresmiley.png" width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="greensquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquare.png"       width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="redsquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquaresmiley.png" width="75" height="75"/></div>
+
+<div style="clear: both;">
+		<a href="#help6" data-rel="dialog">Next</a>
+</div>
+  </div>
+</div> 
+
+
+
+<div data-role="page" id="help6" >
+  <div data-role="header">
+    <h1>Mission</h1>
+  </div>
+  <div data-role="content">
+		<p>
+			<strong>Mission:</strong>
+			find out a possible previous state!
+		</p>
+		<p>
+			<a href="#pageone">Close</a>
+		</p>
+		<p>
+			So, green/red is given, determine the smiley's (cells) that will result into this end state.
+		</p>
+
+		<p>
+			Given:
+		</p>
+<div class="firstcolumn"><img src="greensquare.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="greensquare.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="greensquare.png" width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="greensquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquare.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquare.png"       width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="redsquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquare.png" width="75" height="75"/></div>
+
+<div style="clear: both;">
+		<p>
+			<br />
+			Correct solution:
+		</p>
+</div>
+
+<div class="firstcolumn"><img src="greensquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="greensquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="greensquaresmiley.png" width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="greensquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquaresmiley.png" width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquare.png"       width="75" height="75"/></div>
+
+<div class="firstcolumn"><img src="redsquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquare.png"       width="75" height="75"/></div>
+<div class="othercolumn"><img src="redsquaresmiley.png" width="75" height="75"/></div>
+
+<div style="clear: both;">
+		<a href="#pageone">Close</a>
+</div>
+  </div>
+</div> 
+
+
+
+
+</body>
+</html>
